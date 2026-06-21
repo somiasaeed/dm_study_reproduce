@@ -1,0 +1,5 @@
+Model,Type,CV AUC (mean),CV AUC (std),In-sample AUC
+Fearon & Laitin (2003),Logistic Regression,0.771,0.046,0.792
+Collier & Hoeffler (2004),Logistic Regression,0.787,0.046,0.81
+Hegre & Sambanis (2006),Logistic Regression,0.803,0.051,0.833
+Muchlinski et al. (2016),Random Forest,0.926,0.028,1.0
