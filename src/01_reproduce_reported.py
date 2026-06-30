@@ -9,11 +9,16 @@ rfImpute-imputed data `SambnisImp.csv`. We train the four models and report:
     (a) 10-fold cross-validated AUC   (what caret's train() prints in R)
     (b) in-sample AUC                 (the ROC plots in the paper, lines 200-222)
 
-Because the training data was imputed with train+test together (the leakage),
-these numbers are the INFLATED ones. They should land near the paper's
-reported values (Random Forest AUC ~ 0.90-0.95).
+For each logistic specification the paper trains TWO estimators -- the ordinary
+`glm` logit AND Firth's penalized (`plr`) logit -- so we report both. For the
+Random Forest we report BOTH the class_weight approximation and the explicit
+sampsize=c(30,90) per-tree down-sampling (the most faithful port).
 
-Output: writes results/reported_auc.csv and prints a table.
+Because the training data was imputed with train+test together (the leakage),
+these numbers are the INFLATED ones. They should land near the paper's reported
+values (Random Forest AUC ~ 0.90-0.95).
+
+Output: writes results/reported_auc.csv (one row per model/method) and prints a table.
 """
 import os
 import numpy as np
@@ -22,7 +27,8 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.metrics import roc_auc_score
 
 from data import load_training_data, MODEL_SPECS
-from models import make_logreg, make_random_forest
+from models import (make_logreg, make_firth_logit,
+                    make_random_forest, make_random_forest_downsampled)
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -46,43 +52,51 @@ def insample_auc(X, y, model):
 
 def main():
     df, y = load_training_data()
-    print("=" * 64)
+    print("=" * 70)
     print("STEP 1: Reproducing Muchlinski et al. (2016) reported AUCs")
     print("(trained on the rfImpute-imputed, LEAKED training data)")
-    print("=" * 64)
+    print("=" * 70)
     print(f"Rows: {len(y)}   |   War rate: {y.mean()*100:.2f}%\n")
 
     rows = []
 
     # --- The three logistic-regression sub-models ----------------------
+    # Each run twice: ordinary glm + Firth's penalized (plr) logit.
     for name, features in MODEL_SPECS.items():
         feats = [f for f in features if f in df.columns]
         X = df[feats].values
-        cv_mean, cv_std = cv_auc(X, y, make_logreg())
-        in_auc = insample_auc(X, y, make_logreg())
+        for method, factory in [("glm", make_logreg), ("plr (Firth)", make_firth_logit)]:
+            cv_mean, cv_std = cv_auc(X, y, factory())
+            in_auc = insample_auc(X, y, factory())
+            rows.append({
+                "Model": name,
+                "Method": method,
+                "Type": "Logistic Regression",
+                "CV AUC (mean)": round(cv_mean, 3),
+                "CV AUC (std)": round(cv_std, 3),
+                "In-sample AUC": round(in_auc, 3),
+            })
+            print(f"  {name:26s} [{method:11s}]  CV AUC = {cv_mean:.3f} "
+                  f"(+/-{cv_std:.3f})  in-sample = {in_auc:.3f}")
+
+    # --- Muchlinski's Random Forest (all ~90 variables) ----------------
+    X_all = df.drop(columns=["warstds"]).values
+    for method, factory in [
+        ("rf (class_weight)", make_random_forest),
+        ("rf (sampsize=30,90)", make_random_forest_downsampled),
+    ]:
+        cv_mean, cv_std = cv_auc(X_all, y, factory(n_estimators=300))
+        in_auc = insample_auc(X_all, y, factory(n_estimators=300))
         rows.append({
-            "Model": name,
-            "Type": "Logistic Regression",
+            "Model": "Muchlinski et al. (2016)",
+            "Method": method,
+            "Type": "Random Forest",
             "CV AUC (mean)": round(cv_mean, 3),
             "CV AUC (std)": round(cv_std, 3),
             "In-sample AUC": round(in_auc, 3),
         })
-        print(f"  {name:28s}  CV AUC = {cv_mean:.3f} (+/-{cv_std:.3f})  "
-              f"in-sample = {in_auc:.3f}")
-
-    # --- Muchlinski's Random Forest (all ~90 variables) ----------------
-    X_all = df.drop(columns=["warstds"]).values
-    cv_mean, cv_std = cv_auc(X_all, y, make_random_forest(n_estimators=300))
-    in_auc = insample_auc(X_all, y, make_random_forest(n_estimators=300))
-    rows.append({
-        "Model": "Muchlinski et al. (2016)",
-        "Type": "Random Forest",
-        "CV AUC (mean)": round(cv_mean, 3),
-        "CV AUC (std)": round(cv_std, 3),
-        "In-sample AUC": round(in_auc, 3),
-    })
-    print(f"  {'Muchlinski et al. (2016)':28s}  CV AUC = {cv_mean:.3f} (+/-{cv_std:.3f})  "
-          f"in-sample = {in_auc:.3f}")
+        print(f"  {'Muchlinski et al. (2016)':26s} [{method:19s}]  CV AUC = {cv_mean:.3f} "
+              f"(+/-{cv_std:.3f})  in-sample = {in_auc:.3f}")
 
     res = pd.DataFrame(rows)
     out = os.path.join(RESULTS_DIR, "reported_auc.csv")
@@ -91,6 +105,8 @@ def main():
     print("\nThese AUCs are INFLATED because the data was imputed with train")
     print("and test together. The Random Forest should look much stronger than")
     print("Logistic Regression here -- the gap will shrink once we fix leakage.")
+    print("\nNote: 'rf (sampsize=30,90)' is the most faithful port of the R code's")
+    print("sampsize=c(30,90); 'rf (class_weight)' is the weighted approximation.")
 
 
 if __name__ == "__main__":

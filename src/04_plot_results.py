@@ -40,8 +40,14 @@ SHORT = {
 def main():
     rep = pd.read_csv(os.path.join(RESULTS_DIR, "reported_auc.csv"))
 
-    names = list(rep["Model"])
-    reported = rep["CV AUC (mean)"].values
+    # Select the one canonical reported AUC per model: ordinary glm logit for
+    # the three logistic specs, and the class_weight RF for Muchlinski's model.
+    canonical = rep[rep["Method"].isin(["glm", "rf (class_weight)"])].copy()
+    canonical = canonical.set_index("Model").reindex(list(PAPER_CORRECTED.keys()))
+    canonical = canonical.reset_index()
+
+    names = list(canonical["Model"])
+    reported = canonical["CV AUC (mean)"].values
     corrected = np.array([PAPER_CORRECTED[n] for n in names])
 
     x = np.arange(len(names))

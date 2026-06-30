@@ -1,0 +1,2 @@
+metric,oob_error_rate,oob_auc,n_oob_samples
+Random Forest OOB,0.2724,0.9183,7140

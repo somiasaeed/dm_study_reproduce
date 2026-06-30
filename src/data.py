@@ -81,9 +81,35 @@ def load_training_data():
 
 
 def load_africa_test():
-    """Load the out-of-sample Africa test set (2001-2014)."""
+    """Load the out-of-sample Africa test set (2001-2014).
+
+    NOTE: this file uses *QOG* variable codes (gle_rgdpc, imf_gdpgr, ...),
+    NOT the Sambanis names, so it cannot be fed straight into the 90-variable
+    models. See src/08_africa_oos.py for the variable-mapping that bridges
+    the two schemas.
+    """
     path = os.path.join(DATA_DIR, "AfricaImp.csv")
     return pd.read_csv(path)
+
+
+def load_amelia():
+    """Load the Amelia-II imputed data (``data2`` in the R code).
+
+    This is a *separate, differently-imputed* dataset of the theoretically
+    important variables, which the paper uses ONLY for the causal-mechanism
+    analysis (variable importance + partial dependence, R lines 160-189 &
+    268-288). We drop the id/country/year/atwards columns exactly as the R
+    code does (lines 163-164). Returns (df, y) where df includes `warstds`.
+    """
+    path = os.path.join(DATA_DIR, "Amelia_Imp3.csv")
+    df = pd.read_csv(path)
+    drop = [c for c in ["Unnamed: 0", "country", "year", "atwards"]
+            if c in df.columns]
+    df = df.drop(columns=drop)
+    df = df.dropna(subset=["warstds"])
+    df["warstds"] = df["warstds"].astype(int)
+    y = df["warstds"].values
+    return df, y
 
 
 if __name__ == "__main__":

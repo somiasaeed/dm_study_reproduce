@@ -1,0 +1,4 @@
+NOT_FOUND
+No compatible raw Sambanis file is available.
+Muchlinski's archive (doi:10.7910/DVN/KRKWK8) contains only imputed files.
+To enable the exact Table A1 correction, obtain the raw non-imputed Sambanis data (Hegre & Sambanis 2006 replication archive, or Kapoor & Narayanan's CodeOcean capsule doi:10.24433/CO.4899453.v1) and save it as data/Sambnis_raw.csv, then re-run.

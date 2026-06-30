@@ -1,0 +1,3 @@
+model,auc,precision@0.5,recall@0.5,n_test,n_wars
+Logistic Reg. (mapped),0.623,0.08,0.095,737,21
+Random Forest (mapped),0.519,0.0,0.0,737,21

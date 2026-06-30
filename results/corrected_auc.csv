@@ -1,0 +1,5 @@
+method,Model,Type,Leaky AUC,Corrected AUC,K&N Table A1
+synthetic,Fearon & Laitin (2003),Logistic Regression,0.794,0.59,0.54
+synthetic,Collier & Hoeffler (2004),Logistic Regression,0.693,0.623,0.57
+synthetic,Hegre & Sambanis (2006),Logistic Regression,0.829,0.577,0.68
+synthetic,Muchlinski et al. (2016),Random Forest,0.784,0.685,0.64

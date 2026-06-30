@@ -1,5 +1,9 @@
-Model,Type,CV AUC (mean),CV AUC (std),In-sample AUC
-Fearon & Laitin (2003),Logistic Regression,0.771,0.046,0.792
-Collier & Hoeffler (2004),Logistic Regression,0.787,0.046,0.81
-Hegre & Sambanis (2006),Logistic Regression,0.803,0.051,0.833
-Muchlinski et al. (2016),Random Forest,0.926,0.028,1.0
+Model,Method,Type,CV AUC (mean),CV AUC (std),In-sample AUC
+Fearon & Laitin (2003),glm,Logistic Regression,0.771,0.046,0.792
+Fearon & Laitin (2003),plr (Firth),Logistic Regression,0.769,0.047,0.788
+Collier & Hoeffler (2004),glm,Logistic Regression,0.787,0.046,0.81
+Collier & Hoeffler (2004),plr (Firth),Logistic Regression,0.765,0.049,0.785
+Hegre & Sambanis (2006),glm,Logistic Regression,0.803,0.051,0.833
+Hegre & Sambanis (2006),plr (Firth),Logistic Regression,0.81,0.047,0.829
+Muchlinski et al. (2016),rf (class_weight),Random Forest,0.926,0.028,1.0
+Muchlinski et al. (2016),"rf (sampsize=30,90)",Random Forest,0.917,0.016,0.977
